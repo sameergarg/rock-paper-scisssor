@@ -1,23 +1,22 @@
 import RockPaperScissor.{Action, Result}
 import RockPaperScissor.Action.{paper, pick, rock, scissor}
 import RockPaperScissor.Result.{Lose, Win}
+import cats.data.Writer
+import cats.implicits._
 
 import scala.util.Random
 
 trait RockPaperScissor {
-  def play(player1: Action, player2: Action): Result = {
-    println(s"You: $player1, Computer: $player2")
+  def play(player1: Action, player2: Action): Writer[List[String], Result] = {
+    val actions = s"You: $player1, Computer: $player2"
     (player1, player2) match {
-      case (`rock`, `paper`)      => Lose
-      case (`rock`, `scissor`)    => Win
-      case (`paper`, `scissor`)   => Lose
-      case (`paper`, `rock`)      => Win
-      case (`scissor`, `rock`)    => Lose
-      case (`scissor`, `paper`)   => Win
-      case _                      =>
-        println("Play again\n")
-        play(askPlayer, pick)
-
+      case (`rock`, `paper`)      => Writer(List(actions), Lose)
+      case (`rock`, `scissor`)    => Writer(List(actions), Win)
+      case (`paper`, `scissor`)   => Writer(List(actions), Lose)
+      case (`paper`, `rock`)      => Writer(List(actions), Win)
+      case (`scissor`, `rock`)    => Writer(List(actions), Lose)
+      case (`scissor`, `paper`)   => Writer(List(actions), Win)
+      case _                      => play(askPlayer, pick)
     }
   }
 
@@ -50,9 +49,14 @@ object RockPaperScissor extends App with RockPaperScissor {
   }
 
 
-  play(askPlayer, pick) match {
-    case `Win` => println("You win")
-    case `Lose` => println("You lost")
+  play(askPlayer, pick).run match {
+    case (logs, `Win`) =>
+      println(logs.mkString("\n"))
+      println("You win")
+
+    case (logs, `Lose`) =>
+      println(logs.mkString("\n"))
+      println("You lost")
   }
 
 
